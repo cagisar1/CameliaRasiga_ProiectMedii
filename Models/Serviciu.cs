@@ -15,5 +15,7 @@ namespace CameliaRasiga_ProiectMedii.Models
         public decimal Pret { get; set; }
         public int? MedicID { get; set; }
         public Medic? Medic { get; set; }
+
+        ICollection<UtilizatorServiciu>? UtilizatorServicii { get; set; }
     }
 }

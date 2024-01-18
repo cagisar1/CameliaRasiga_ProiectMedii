@@ -21,5 +21,9 @@ namespace CameliaRasiga_ProiectMedii.Data
         public DbSet<CameliaRasiga_ProiectMedii.Models.Serviciu>? Serviciu { get; set; }
 
         public DbSet<CameliaRasiga_ProiectMedii.Models.Specialitate>? Specialitate { get; set; }
+
+        public DbSet<CameliaRasiga_ProiectMedii.Models.Utilizator>? Utilizator { get; set; }
+
+        public DbSet<CameliaRasiga_ProiectMedii.Models.UtilizatorServiciu>? UtilizatorServiciu { get; set; }
     }
 }
