@@ -1,87 +1,47 @@
-﻿@page
-@model CameliaRasiga_ProiectMedii.Pages.Index1Model
-@{
-    ViewData["Title"] = "Despre noi";
-}
+﻿public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        {
+            returnUrl ??= Url.Content("~/");
+            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            if (ModelState.IsValid)
+            {
+                var user = CreateUser();
 
-<div class="container">
-    <div class="row bg-dark p-4 mb-3 justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 col-lg-6 px-lg-4">
-            <h1 class="h1 mt-2 mb-5 text-warning">Despre noi</h1>
-            <p class="my-3 text-light">
-                Bine ati venit la Health Line, locul unde suntem dedicați îmbunătățirii sănătății și bunăstării comunității noastre!
-            </p>
-            <p class="my-3 text-light">
-                La Health Line, înțelegem că sănătatea bună este piatra de temelie a unei vieți împlinite și ne angajăm să oferim servicii medicale excepționale pentru a vă sprijini în călătoria către bunăstare.
-            </p>
-        </div>
-        <div class="col col-12 col-lg-6 px-lg-4">
-            <img src="~/images/caring.jpg" class="my-4" width="550" !important style="max-width:100%" />
-        </div>
-    </div>
+                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                var result = await _userManager.CreateAsync(user, Input.Password);
 
-    <div class="row justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 px-lg-5">
-            <h3 class="h3 mt-4 mb-2 text-center text-lg-start">Misiunea noastra</h3>
-            <p class="my-2">
-                Misiunea noastră la Health Line este de a oferi persoanelor abilitate să ducă o viață mai sănătoasă, oferind asistență medicală cuprinzătoare și plină de compasiune. Ne străduim să fim un far al sănătății și al bunăstării, oferind îngrijire personalizată și centrată pe pacient, care se adresează nevoilor dumneavoastră unice.
-            </p>
-        </div>
-    </div>
+                Utilizator.Email = Input.Email;
+                _context.Utilizator.Add(Utilizator);
+                await _context.SaveChangesAsync();
 
-    <div class="row justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 px-lg-5">
-            <h3 class="h3 mt-4 mb-2">Servicii complete</h3>
-            <p class="my-2">
-                La Health Line, oferim o gamă largă de servicii de asistență medicală pentru a răspunde nevoilor dumneavoastră diverse. Echipa noastră de profesioniști din domeniul sănătății cu experiență și compasiune este dedicată furnizării de îngrijiri medicale de înaltă calitate, servicii preventive și educație pentru sănătate. Indiferent dacă aveți nevoie de controale de rutină, analize medicale, consultații specializate sau gestionarea continuă a afecțiunilor cronice, suntem aici pentru dumneavoastră.
-            </p>
-        </div>
-    </div>
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("User created a new account with password.");
 
-    <div class="row justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 px-lg-5">
-            <h3 class="h3 mt-4 mb-2">Abordare centrată pe pacient</h3>
-            <p class="my-2">
-                Credem în construirea unor relații de durată cu pacienții noștri. Abordarea noastră centrată pe pacient vă asigură că sunteți implicat activ în deciziile dumneavoastră de îngrijire a sănătății. Ne facem timp să vă ascultăm, să vă înțelegem preocupările și să lucrăm în colaborare pentru a dezvolta planuri de tratament personalizate care prioritizează bunăstarea dumneavoastră.
-            </p>
-        </div>
-    </div>
+                    var userId = await _userManager.GetUserIdAsync(user);
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                    var callbackUrl = Url.Page(
+                        "/Account/ConfirmEmail",
+                        pageHandler: null,
+                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                        protocol: Request.Scheme);
 
-    <div class="row justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 px-lg-5">
-            <h3 class="h3 mt-4 mb-2">Facilități de ultimă generație</h3>
-            <p class="my-2">
-                Pentru a oferi cea mai bună îngrijire posibilă, am investit în facilități de ultimă generație și în tehnologie de ultimă oră. De la instrumente avansate de diagnostic la opțiuni moderne de tratament, ne străduim să rămânem în fruntea inovației medicale pentru a servi mai bine comunitatea noastră.
-            </p>
-        </div>
-    </div>
+                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-    <div class="row justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 px-lg-5">
-            <h3 class="h3 mt-4 mb-2">Implicarea comunității</h3>
-            <p class="my-2">
-                La Health Line, suntem mai mult decât un furnizor de servicii medicale; suntem un partener în bunăstarea comunității. Ne angajăm activ cu inițiative locale, programe de educație pentru sănătate și activități comunitare pentru a promova o cultură a bunăstării dincolo de zidurile clinicii noastre.
-            </p>
-        </div>
-    </div>
+                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
+                    {
+                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+                    }
+                    else
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        return LocalRedirect(returnUrl);
+                    }
+                }
+            }
 
-    <div class="row justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 px-lg-5">
-            <h3 class="h3 mt-4 mb-2">Acces comod</h3>
-            <p class="my-2">
-                Înțelegem importanța accesibilității în asistența medicală. Clinica noastră situată convenabil este concepută pentru a vă asigura că puteți accesa îngrijirea de care aveți nevoie atunci când aveți nevoie. De la programe flexibile de întâlnire până la procese administrative simplificate, acordăm prioritate experienței dumneavoastră de asistență medicală cât mai fluidă posibil.
-            </p>
-        </div>
-    </div>
-
-    <div class="row justify-content-center text-center justify-content-lg-start text-lg-start">
-        <div class="col col-12 col-lg-10 px-lg-5">
-            <p class="mt-5 mb-2">
-                Health Line nu este doar o clinică medicală; suntem un aliat dedicat în călătoria dumneavoastră către o sănătate optimă. Vă mulțumim că ne considerați partenerul dumneavoastră de sănătate. Așteptăm cu nerăbdare să vă servim și să contribuim la bunăstarea comunității noastre.
-            </p>
-            <p class="my-2">
-                Dacă aveți întrebări sau doriți să aflați mai multe, nu ezitați să contactați. Sănătatea dumneavoastră este prioritatea noastră și suntem aici pentru a vă sprijini la fiecare pas.
-            </p>
-        </div>
-    </div>
-</div>
+            // If we got this far, something failed, redisplay form
+            return Page();
+        }

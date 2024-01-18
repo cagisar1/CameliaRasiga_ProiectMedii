@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CameliaRasiga_ProiectMedii.Data;
 using CameliaRasiga_ProiectMedii.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CameliaRasiga_ProiectMedii.Pages.Specialitati
 {
+    [Authorize(Roles = "Admin")]
     public class EditModel : PageModel
     {
         private readonly CameliaRasiga_ProiectMedii.Data.CameliaRasiga_ProiectMediiContext _context;

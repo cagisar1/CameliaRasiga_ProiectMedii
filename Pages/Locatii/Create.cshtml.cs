@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using CameliaRasiga_ProiectMedii.Data;
 using CameliaRasiga_ProiectMedii.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CameliaRasiga_ProiectMedii.Pages.Locatii
 {
+    [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
     {
         private readonly CameliaRasiga_ProiectMedii.Data.CameliaRasiga_ProiectMediiContext _context;
